@@ -6,6 +6,10 @@
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <RootNamespace>PcMon</RootNamespace>
     <AssemblyName>pcmon</AssemblyName>
+    <Version>1.0.0</Version>
+    <Authors>SaintMusa</Authors>
+    <Product>pcmon</Product>
+    <Description>A live resource monitor for the Windows terminal</Description>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>

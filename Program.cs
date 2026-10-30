@@ -21,6 +21,9 @@ internal static unsafe class Program
         {
             switch (args[i])
             {
+                case "--version" or "-v":
+                    Console.WriteLine($"pcmon {typeof(Program).Assembly.GetName().Version?.ToString(3)}");
+                    return 0;
                 case "--interval": interval = int.Parse(args[++i]); break;
                 case "--snapshot": tab = i + 1 < args.Length && int.TryParse(args[i + 1], out int t) ? (i++, t - 1).Item2 : 0; break;
                 case "--tab": startTab = Math.Clamp(int.Parse(args[++i]) - 1, 0, 4); break;
@@ -31,6 +34,7 @@ internal static unsafe class Program
                 default:
                     Console.WriteLine("pcmon: a live resource monitor for the terminal\n\n" +
                                       "  pcmon                  start (press ? inside for keys)\n" +
+                                      "  --version              print the version\n" +
                                       "  --interval <ms>        time between updates, default 1000\n" +
                                       "  --tab <1-5>            start on this tab\n" +
                                       "  --snapshot [tab]       print one screen as text (tab 1-5)\n" +
