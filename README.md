@@ -1,65 +1,122 @@
 # pcmon
 
-A fast, live resource monitor for the Windows terminal, in the spirit of Resource Monitor. It is written in C# and compiled to a single native executable with NativeAOT.
+**See what your Windows PC is doing, live, right in your terminal.**
 
-## Features
+pcmon is a free, lightweight alternative to Task Manager and Resource Monitor. It shows what is using your processor, memory, disk and internet, and it runs as a single small program.
 
-- Five tabs: Overview, CPU, Memory, Disk and Network
-- History graphs, per-core CPU, and Resource Monitor's physical memory bar
-- Per-process CPU, memory, hard faults, disk and network, without administrator rights
-- Process tree, process details, filtering, and pinning a process to focus every table on it
-- Suspend, resume and end processes, with a confirmation before ending one
-- Services, TCP connections and listening ports
-- Keyboard and mouse support
-- As administrator: disk activity by file and network activity by address, through kernel event tracing
+## What it does
 
-Press `?` inside pcmon to see every key.
+- **Shows your PC at a glance:** live graphs for processor, memory, disk and network
+- **Finds what is slowing you down:** see which apps are using the most, and sort the list however you like
+- **Shows what is using your internet:** see which apps are connected, and how much data they use
+- **Shows what is using your disk:** see which apps are reading and writing, and which files they touch
+- **Lets you take control:** search for any app, pause it, or close it
+- **Stays out of your way:** uses about 20 MB of memory and works with your keyboard or mouse
+
+## What you need
+
+- A 64-bit Windows 11 PC
+- Windows 11 version 24H2 or later to see each app's network use
+
+Nothing else needs to be installed.
 
 ## Install
 
-pcmon needs 64-bit Windows 11. Per-process network numbers need Windows 11 24H2 or later. Nothing else is required.
+**1. Download pcmon**
 
-1. Download `pcmon-<version>-win-x64.zip` from [Releases](https://github.com/SaintMusa/pcmon/releases/latest).
+Go to the [latest release](https://github.com/SaintMusa/pcmon/releases/latest) and download the file ending in `win-x64.zip`. Leave it in your Downloads folder.
 
-2. Unzip it into a folder of your own. Run this in PowerShell, using the name of the file you downloaded:
+**2. Open PowerShell**
 
-   ```powershell
-   $dir = "$env:LOCALAPPDATA\Programs\pcmon"
-   New-Item -ItemType Directory -Force $dir
-   Expand-Archive "$HOME\Downloads\pcmon-1.0.0-win-x64.zip" $dir -Force
-   ```
+Open the Start menu, type `PowerShell`, and press Enter.
 
-3. Add that folder to your `PATH`, so `pcmon` works from anywhere. Run this to open the window:
+**3. Paste these lines and press Enter**
 
-   ```powershell
-   rundll32 sysdm.cpl,EditEnvironmentVariables
-   ```
-
-   Under **User variables**, select **Path** and click **Edit**. Click **New**, paste `%LOCALAPPDATA%\Programs\pcmon`, then click **OK** in each window.
-
-4. Open a new terminal and run:
-
-   ```powershell
-   pcmon
-   ```
-
-Run the terminal as administrator to add disk activity by file and network activity by address.
-
-To update, close pcmon and repeat steps 1 and 2. To uninstall, delete the folder and remove its `PATH` entry.
-
-### Security warnings
-
-pcmon is not code-signed, so Windows SmartScreen or your antivirus may warn about it. To check that your download is genuine, compare its hash with the `.sha256` file on the release page:
+They unzip pcmon into your user folder and let you start it from anywhere. They do not need administrator rights.
 
 ```powershell
-Get-FileHash "$HOME\Downloads\pcmon-1.0.0-win-x64.zip" -Algorithm SHA256
+$dir = "$env:LOCALAPPDATA\Programs\pcmon"
+New-Item -ItemType Directory -Force $dir | Out-Null
+$zip = Get-ChildItem "$HOME\Downloads\pcmon-*-win-x64.zip" | Sort-Object LastWriteTime | Select-Object -Last 1
+Expand-Archive $zip.FullName $dir -Force
+$path = (Get-Item HKCU:\Environment).GetValue('Path', '', 'DoNotExpandEnvironmentNames')
+if (($path -split ';') -notcontains $dir) { Set-ItemProperty HKCU:\Environment Path "$($path.TrimEnd(';'));$dir" -Type ExpandString }
+[Environment]::SetEnvironmentVariable('PCMON_REFRESH', $null, 'User')
 ```
 
-If you have the [GitHub CLI](https://cli.github.com/), you can also confirm that the zip was built from this repository:
+**4. Start it**
+
+Close PowerShell, open it again, and run:
 
 ```powershell
-gh attestation verify "$HOME\Downloads\pcmon-1.0.0-win-x64.zip" --repo SaintMusa/pcmon
+pcmon
 ```
+
+## How to use it
+
+Click a tab or press its number to switch views.
+
+| Tab | What it shows |
+| --- | --- |
+| **1 Overview** | Live graphs and every running app |
+| **2 CPU** | Each processor core, plus apps and Windows services |
+| **3 Memory** | How your memory is being used, and by which apps |
+| **4 Disk** | Which apps are using your disk, plus your drives and free space |
+| **5 Network** | Which apps are using your internet, plus connections and open ports |
+
+These are the keys you will use most:
+
+| Key | What it does |
+| --- | --- |
+| `Tab` | Move to the next table on the screen |
+| Arrow keys | Move up and down the list, or change how it is sorted |
+| `/` | Search by name (press `Esc` to clear) |
+| `Enter` | Show details about the selected app |
+| `t` | Show which apps started which |
+| `e` | Make the current table fill the window |
+| `Space` | Pin an app, so the other tables show only that app |
+| `z` | Pause or resume the selected app |
+| `k` | Close the selected app (it asks first) |
+| `?` | Show every key |
+| `q` | Quit |
+
+**Be careful with `k` and `z`.** Closing an app loses any unsaved work, and pausing it makes it stop responding until you resume it.
+
+## See even more with administrator mode
+
+Right-click PowerShell or Terminal and choose **Run as administrator**, then start pcmon. You will also see:
+
+- Which individual files are being read and written
+- Which internet addresses each app is talking to
+- Network use for system apps that Windows otherwise hides
+
+## Update
+
+Close pcmon, download the new zip, and repeat steps 2 and 3.
+
+## Uninstall
+
+Close pcmon, open PowerShell, then paste these lines and press Enter:
+
+```powershell
+$dir = "$env:LOCALAPPDATA\Programs\pcmon"
+Remove-Item $dir -Recurse -Force
+$path = (Get-Item HKCU:\Environment).GetValue('Path', '', 'DoNotExpandEnvironmentNames')
+Set-ItemProperty HKCU:\Environment Path ((($path -split ';') | Where-Object { $_ -and $_ -ne $dir }) -join ';') -Type ExpandString
+[Environment]::SetEnvironmentVariable('PCMON_REFRESH', $null, 'User')
+```
+
+## Is it safe?
+
+pcmon is open source, so anyone can read the code. It does not connect to the internet or send your data anywhere.
+
+It is not code-signed yet, so Windows or your antivirus may show a warning. If you want to check that your download is genuine, run the line below and compare the result with the `.sha256` file on the release page:
+
+```powershell
+Get-FileHash "$HOME\Downloads\pcmon-*-win-x64.zip" -Algorithm SHA256
+```
+
+pcmon also relies on some undocumented parts of Windows. A future Windows update could change them. If that happens, pcmon detects it and shows simpler disk numbers.
 
 ## Build it yourself
 
@@ -72,30 +129,7 @@ cd pcmon
 .\dist\pcmon.exe
 ```
 
-`build.ps1` puts the Visual Studio installer folder on `PATH`, which the native link step needs in order to find `vswhere.exe`.
-
-## Publish a release
-
-Update `<Version>` in `pcmon.csproj`, then push a matching tag. GitHub builds, checks and publishes the release:
-
-```powershell
-git tag v1.0.1
-git push origin v1.0.1
-```
-
-## How it stays light
-
-- It reads the process list with one system call instead of WMI.
-- Slow system calls run on a collector thread outside the lock shared with the UI, so a stalled drive cannot freeze the keyboard.
-- The screen is a grid of cells, and only cells that changed are sent to the terminal.
-- Buffers and objects are reused, so the garbage collector rarely runs.
-- It sleeps until a timer or key wakes it, and collects only what the visible tab needs.
-
-## Good to know
-
-pcmon relies on some undocumented Windows structures, which could change in a future version. At startup it checks them against live data, and falls back to basic I/O numbers if they do not match.
-
-## Acknowledgements
+## Thanks
 
 Ideas came from [wttop](https://github.com/jchomarat/wttop), [btop](https://github.com/aristocratos/btop), [bottom](https://github.com/ClementTsang/bottom) and [System Informer](https://github.com/winsiderss/systeminformer). pcmon contains no code from these projects.
 
