@@ -129,7 +129,9 @@ cd pcmon
 .\dist\pcmon.exe
 ```
 
-## Thanks
+## Credits
+
+pcmon was built with help from Claude, an AI assistant.
 
 Ideas came from [wttop](https://github.com/jchomarat/wttop), [btop](https://github.com/aristocratos/btop), [bottom](https://github.com/ClementTsang/bottom) and [System Informer](https://github.com/winsiderss/systeminformer). pcmon contains no code from these projects.
 
