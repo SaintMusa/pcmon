@@ -1,0 +1,33 @@
+# Builds pcmon on every push and pull request, so a broken commit shows up
+# straight away instead of on release day
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build
+        shell: pwsh
+        run: ./build.ps1
+
+      - name: Check the build
+        shell: pwsh
+        run: |
+          & ./dist/pcmon.exe --snapshot 1 --size 120 30
+          if ($LASTEXITCODE -ne 0) { throw 'pcmon failed to run' }
+          & ./dist/pcmon.exe --interval 0
+          if ($LASTEXITCODE -ne 1) { throw 'pcmon accepted a bad --interval' }
