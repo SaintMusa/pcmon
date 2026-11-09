@@ -41,7 +41,6 @@ $zip = Get-ChildItem "$HOME\Downloads\pcmon-*-win-x64.zip" | Sort-Object LastWri
 Expand-Archive $zip.FullName $dir -Force
 $path = (Get-Item HKCU:\Environment).GetValue('Path', '', 'DoNotExpandEnvironmentNames')
 if (($path -split ';') -notcontains $dir) { Set-ItemProperty HKCU:\Environment Path "$($path.TrimEnd(';'));$dir" -Type ExpandString }
-[Environment]::SetEnvironmentVariable('PCMON_REFRESH', $null, 'User')
 ```
 
 **4. Start it**
@@ -103,7 +102,6 @@ $dir = "$env:LOCALAPPDATA\Programs\pcmon"
 Remove-Item $dir -Recurse -Force
 $path = (Get-Item HKCU:\Environment).GetValue('Path', '', 'DoNotExpandEnvironmentNames')
 Set-ItemProperty HKCU:\Environment Path ((($path -split ';') | Where-Object { $_ -and $_ -ne $dir }) -join ';') -Type ExpandString
-[Environment]::SetEnvironmentVariable('PCMON_REFRESH', $null, 'User')
 ```
 
 ## Is it safe?

@@ -24,18 +24,39 @@ internal static unsafe class Program
                 case "--version" or "-v":
                     Console.WriteLine($"pcmon {typeof(Program).Assembly.GetName().Version?.ToString(3)}");
                     return 0;
-                case "--interval": interval = int.Parse(args[++i]); break;
-                case "--snapshot": tab = i + 1 < args.Length && int.TryParse(args[i + 1], out int t) ? (i++, t - 1).Item2 : 0; break;
-                case "--tab": startTab = Math.Clamp(int.Parse(args[++i]) - 1, 0, 4); break;
-                case "--size": width = int.Parse(args[++i]); height = int.Parse(args[++i]); break;
-                case "--bench": bench = int.Parse(args[++i]); break;
-                case "--etw-test": etwTest = int.Parse(args[++i]); break;
-                case "--cpu-test": return CpuTest(int.Parse(args[++i]));
+                case "--interval":
+                    if (!ReadNumber(args, ref i, 250, 5000, out interval)) return 1;
+                    break;
+                case "--snapshot":
+                    tab = 0;
+                    // The tab number is optional, so only a number counts as part of this option
+                    if (i + 1 < args.Length && int.TryParse(args[i + 1], out _))
+                    {
+                        if (!ReadNumber(args, ref i, 1, 5, out tab)) return 1;
+                        tab--;
+                    }
+                    break;
+                case "--tab":
+                    if (!ReadNumber(args, ref i, 1, 5, out startTab)) return 1;
+                    startTab--;
+                    break;
+                case "--size":
+                    if (!ReadNumber(args, ref i, 1, 1000, out width) || !ReadNumber(args, ref i, 1, 1000, out height, "--size")) return 1;
+                    break;
+                case "--bench":
+                    if (!ReadNumber(args, ref i, 1, 1_000_000, out bench)) return 1;
+                    break;
+                case "--etw-test":
+                    if (!ReadNumber(args, ref i, 1, 3600, out etwTest)) return 1;
+                    break;
+                case "--cpu-test":
+                    if (!ReadNumber(args, ref i, 1, 3600, out int seconds)) return 1;
+                    return CpuTest(seconds);
                 default:
                     Console.WriteLine("pcmon: a live resource monitor for the terminal\n\n" +
                                       "  pcmon                  start (press ? inside for keys)\n" +
                                       "  --version              print the version\n" +
-                                      "  --interval <ms>        time between updates, default 1000\n" +
+                                      "  --interval <ms>        time between updates, 250-5000, default 1000\n" +
                                       "  --tab <1-5>            start on this tab\n" +
                                       "  --snapshot [tab]       print one screen as text (tab 1-5)\n" +
                                       "  --size <w> <h>         screen size for --snapshot\n" +
@@ -64,6 +85,19 @@ internal static unsafe class Program
         {
             Cleanup();
         }
+    }
+
+    // Reads the whole number that follows the option at args[i] and moves i past it.
+    // On a missing, non-numeric or out-of-range value it says what was expected and returns false.
+    // Pass option when args[i] is an earlier value of the same option, as with --size's height.
+    static bool ReadNumber(string[] args, ref int i, int min, int max, out int value, string? option = null)
+    {
+        option ??= args[i];
+        if (++i < args.Length && int.TryParse(args[i], out value) && value >= min && value <= max) return true;
+
+        value = 0;
+        Console.Error.WriteLine($"pcmon: {option} needs a whole number from {min} to {max}. Run pcmon --help to see every option.");
+        return false;
     }
 
     // --- Normal running --------------------------------------------------------
