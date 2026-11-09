@@ -31,3 +31,5 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'pcmon failed to run' }
           & ./dist/pcmon.exe --interval 0
           if ($LASTEXITCODE -ne 1) { throw 'pcmon accepted a bad --interval' }
+          # GitHub ends pwsh steps with "exit $LASTEXITCODE", which would report the expected failure above
+          exit 0
